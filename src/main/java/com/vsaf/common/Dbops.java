@@ -19,6 +19,7 @@ public class Dbops {
 	private static PreparedStatement deletepeople_statement = null;
  	private static PreparedStatement readallpeople_statement = null;
 	private static PreparedStatement updatepswrd_statement = null;
+	private static PreparedStatement getsalaries_statement = null;
 	private static PreparedStatement addpeople_statement = null;
 
 	private static void log(String s) {
@@ -42,27 +43,24 @@ public class Dbops {
 		switch(state) {
 			case 0:{
 				System.out.println("Available actions:");
-				System.out.println("1 - Add employee");
-				System.out.println("2 - Update employee name");
-				System.out.println("3 - Read employees");
-				System.out.println("4 - Delete employee");
+				System.out.println("1 - Add person");
+				System.out.println("2 - Update a person's passport info");
+				System.out.println("3 - List persons");
+				System.out.println("4 - Delete a person");
+				System.out.println("5 - Print a list of salaries");
+				System.out.println("6 - Exit");
 				Scanner sc = new Scanner(System.in);
 				Integer in = Integer.parseInt(sc.nextLine());
 				draw_menu(in);
 				break;
 			}
 			case 1:{
-				System.out.println("Write employee information:");
-				
 				add_people();
 				break;
 
 			}
 			case 2:{
-				System.out.println("Write employee id");
-				Scanner sc = new Scanner(System.in);
-				Integer id = Integer.parseInt(sc.nextLine());
-				//update_employee(id);
+				update_passport();
 				break;
 			}
 			case 3:{
@@ -71,50 +69,79 @@ public class Dbops {
 				break;
 			}
 			case 4:{
-				System.out.println("Write employee id");
-				Scanner sc = new Scanner(System.in);
-				Integer id = Integer.parseInt(sc.nextLine());
-				//delete_employee(id);
+				delete_person();
+				break;
+			}
+			case 5:{
+				print_salaries();
+				break;
+			}
+			case 6:{
+				System.exit(0);
 				break;
 			}
 			default: {
-				System.exit(0);
+				draw_menu(0);
 				break;
 			}
 		}
 
 	}
 
-	public static void read_all_people(){
+	private static void print_salaries() {
+		open_connection();
+        if(connection != null){
+            try{
+                if(getsalaries_statement != null){
+                    ResultSet rs = null;
+                    rs = getsalaries_statement.executeQuery();
+                    log("After getsalaries_statement queury");  
+                    System.out.println("ID, FIRSTNAME, SALARY");
+                    while(rs.next()){
+                    	
+
+                    	System.out.println(rs.getInt(1) + ", " + rs.getString(2)  + ", " + rs.getInt(3));
+                    	
+
+                    }
+                    
+
+                } else {
+                	log("no statement in getsalaries_statement");
+                }
+            }catch(Exception e){
+                log("Exception in getsalaries_statement");
+                log(e.toString());
+            }
+        }
+	}
+
+	private static void read_all_people(){
         open_connection();
         if(connection != null){
             try{
                 if(readallpeople_statement!= null){
                     ResultSet rs = null;
-                    log("readallusr_statement :"+readallpeople_statement.toString());  
+
                     rs = readallpeople_statement.executeQuery();
                     log("After readallusr_statement queury");  
                     System.out.println("ID, FIRSTNAME, LASTNAME, MIDDLENAME, BIRTH_DATE, SEX, " +
                      "ADDRESS, PHONE_NUMBER, PASPORT(1,1), IMAGE_ID");
                     while(rs.next()){
-                    	// Passport pass = null;
+
                     	String pass = null;
                     	if(rs.getObject(9) == null){
-                    		// pass = new Passport(0,0);
+
                     		pass = "---";
                     	} else {
-                    		pass = ((((Struct)rs.getObject(9)).getAttributes())[0]).toString() + " | " + ((((Struct)rs.getObject(9)).getAttributes())[1]).toString();
-                    		// pass = new Passport(intValue((((Struct)rs.getObject(9)).getAttributes())[0]),((((Struct)rs.getObject(9)).getAttributes())[1])) ;	
+                    		pass = ((((Struct)rs.getObject(9)).getAttributes())[0]).toString() + " | " + 
+                    		((((Struct)rs.getObject(9)).getAttributes())[1]).toString();
                     	}
                     	
 
                     	System.out.println(rs.getInt(1) + ", " + rs.getString(2) + ", " + rs.getString(3) +
                     	  ", " + rs.getString(4) + ", " + rs.getString(5) + ", " + rs.getString(6) +
                     	  ", " + rs.getString(7) + ", " + rs.getString(8) + ", " + pass + ", " + rs.getString(10));
-
-
-                    	  // (" + ((Passport)rs.getObject(8)).num1 + "," +
-                    	  // + ((Passport)rs.getObject(8)).num2 + "), " + rs.getInt(9));
                     	
 
                     }
@@ -130,15 +157,13 @@ public class Dbops {
         
     }
 
-    public static void add_people(){
+    private static void add_people(){
         open_connection();
         if(connection != null){
             try{
                 if(addpeople_statement!= null){
 
                     ResultSet rs = null;
-
-// FIRSTNAME, LASTNAME, MIDDLENAME, BIRTH_DATE, SEX, ADDRESS, PHONE_NUMBER, PASPORT(1,1), IMAGE_ID
 					
 					Scanner sc = new Scanner(System.in);
 					System.out.println("Input first name");
@@ -187,7 +212,7 @@ public class Dbops {
                 	if(num == null|| ser == null){
 						addpeople_statement.setObject(8, null);
 					} else {
-						addpeople_statement.setObject(8, connection.createStruct("PASSWORD", new Object[] { ser,num }));
+						addpeople_statement.setObject(8, connection.createStruct("S208306.PASSPORT", new Object[] { ser,num }));
 					}
                 	addpeople_statement.executeUpdate();
                     log("After addpeople_statement queury");  
@@ -199,6 +224,85 @@ public class Dbops {
                 }
             }catch(Exception e){
                 log("Exception in add_people");
+                log(e.toString());
+            }
+        }
+        
+    }
+
+    private static void update_passport(){
+        open_connection();
+        if(connection != null){
+            try{
+                if(updatepswrd_statement!= null){
+
+                    ResultSet rs = null;
+					Scanner sc = new Scanner(System.in);
+					
+					System.out.println("Input person ID");
+					String out = sc.nextLine();
+                	updatepswrd_statement.setInt(2, Integer.parseInt(out));
+   					System.out.println("Input password serial number");
+   					out = sc.nextLine();
+					Integer ser = 0;
+					if(out == "0") {
+                		ser = null;
+                	} else {
+                		ser = Integer.parseInt(out);
+                	}
+
+					
+					System.out.println("Input passport number");
+					Integer num = 0;
+                	out = sc.nextLine();
+                	if(out == "0") {
+                		num = null;
+                	} else {
+                		num = Integer.parseInt(out);
+                	}
+                	if(num == null|| ser == null){
+						updatepswrd_statement.setObject(1, null);
+					} else {
+						updatepswrd_statement.setObject(1, connection.createStruct("S208306.PASSPORT", new Object[] { ser,num }));
+					}
+                	updatepswrd_statement.executeUpdate();
+                    log("After updatepswrd_statement queury");  
+                    
+                    
+
+                } else {
+                	log("no statement in updatepswrd_statement");
+                }
+            }catch(Exception e){
+                log("Exception in updatepswrd_statement");
+                log(e.toString());
+            }
+        }
+        
+    }
+
+    private static void delete_person(){
+        open_connection();
+        if(connection != null){
+            try{
+                if(deletepeople_statement!= null){
+
+                    ResultSet rs = null;
+					Scanner sc = new Scanner(System.in);
+					
+					System.out.println("Input person ID");
+					String out = sc.nextLine();
+                	deletepeople_statement.setInt(1, Integer.parseInt(out));
+                	deletepeople_statement.executeUpdate();
+                    log("After delete_person queury");  
+                    
+                    
+
+                } else {
+                	log("no statement in delete_person");
+                }
+            }catch(Exception e){
+                log("Exception in delete_person");
                 log(e.toString());
             }
         }
@@ -242,30 +346,16 @@ public class Dbops {
 
 			try {
 
-            	// String tablename = "lul"; // temp
-
 				connection = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:orbis","s208306","lxr868");
-
-                // String insertTableSQL = "INSERT INTO " + tablename 
-                //         + " (x, y, r, contained) VALUES "
-                //         + "(?,?,?,?)";
-
-				Map map = connection.getTypeMap();
-                map.put("SchemaName.passport", Class.forName("com.vsaf.common.Passport"));
-                connection.setTypeMap(map);
-
-                // add_statement = connection.prepareStatement(insertTableSQL);  
                 deletepeople_statement = connection.prepareStatement("DELETE FROM PEOPLE WHERE PEOPLE.ID = ?");  
-
+                getsalaries_statement = connection.prepareStatement("SELECT * FROM TABLE (month_stat.get_salaries())");
                 readallpeople_statement = connection.prepareStatement("SELECT * FROM PEOPLE"); 
-                updatepswrd_statement = connection.prepareStatement("UPDATE PEOPLE SET PASPORT_ = PASSPORT(1,2) WHERE " +
+                updatepswrd_statement = connection.prepareStatement("UPDATE PEOPLE SET PASPORT_ = ? WHERE " +
                  "PEOPLE.ID = ?"); 
-                // updateall_statement = connection.prepareStatement("UPDATE " + tablename + " SET r = ?"); 
 
-                addpeople_statement = connection.prepareStatement("INSERT INTO PEOPLE VALUES((SELECT MAX(ID) FROM PEOPLE)+1, ?, ?, ?, ?, ?, ?, ?, ?, 1)");  
+                addpeople_statement = connection.prepareStatement("INSERT INTO PEOPLE VALUES((SELECT MAX(ID)"+
+                " FROM PEOPLE)+1, ?, ?, ?, ?, ?, ?, ?, ?, 1)");  
 
-                // finduser_statement = connection.prepareStatement("SELECT * FROM " + tablename + 
-                // " WHERE name = ? AND password = ?");  
 
 			} catch (Exception e) {
 
