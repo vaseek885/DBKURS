@@ -1,0 +1,3 @@
+PostgreSQL JDBC Driver registering
+Exception in add_people
+java.sql.SQLException: invalid name pattern: S208306.PASSWORD
